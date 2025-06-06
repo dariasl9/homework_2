@@ -3,6 +3,9 @@ name: Build and Release
 on:
   push:
     branches: [ "main" ]
+    
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -22,13 +25,18 @@ jobs:
           g++ -std=c++17 -O2 ip_filter.cpp -o ip_filter
           chmod +x ip_filter
 
+      - name: Create Tag
+        id: tag
+        run: |
+          TAG="v1.0.${GITHUB_RUN_NUMBER}"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+          git tag $TAG
+          git push origin $TAG
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: |
-            ip_filter
-          draft: false
-          prerelease: false
-          generate_release_notes: true
+          tag_name: ${{ steps.tag.outputs.TAG }}
+          files: ip_filter
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Автоматический токен
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
